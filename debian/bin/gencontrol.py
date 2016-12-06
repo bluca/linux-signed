@@ -113,6 +113,8 @@ class Gencontrol(Base):
                 .get('signed-modules', False)):
             return
 
+        vars["featureset"] = featureset
+
         makeflags['IMAGEVERSION'] = vars['imageversion']
 
         packages['source']['Build-Depends'].append(
