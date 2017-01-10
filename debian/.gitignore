@@ -1,0 +1,13 @@
+*~
+.#*
+*-di
+/*.debhelper*
+/*.substvars
+/build/
+/control*
+/files
+/linux-image-*
+/localpackages/
+/rules.gen
+/source.lintian-overrides
+/stamps/

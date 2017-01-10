@@ -1,0 +1,10 @@
+Source: linux-signed
+Section: kernel
+Priority: optional
+Maintainer: Debian Kernel Team <debian-kernel@lists.debian.org>
+Uploaders: Ben Hutchings <ben@decadent.org.uk>
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>= 9.20151004~), rsync, sbsigntool [amd64 arm64 armhf i386], kernel-wedge (>= 2.93~), linux-kbuild-@version@
+Vcs-Git: https://anonscm.debian.org/git/kernel/linux-signed.git
+Vcs-Browser: https://anonscm.debian.org/cgit/kernel/linux-signed.git
+Homepage: https://www.kernel.org/

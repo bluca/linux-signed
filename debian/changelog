@@ -1,0 +1,190 @@
+linux-signed (3.4) unstable; urgency=medium
+
+  * debian/control: Correct syntax of Built-Using field (Closes: #846488)
+  * debian/rules: Use dpkg-parsechangelog -S option to select fields
+  * debian/bin/sign.py: Introduce specific exception classes
+  * debian/bin/sign.py: Change caching to support multiple mirrors and suites
+  * debian/bin/sign.py: Add download fallback to incoming.debian.org
+  * Update to linux version 4.8.15-2
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Fri, 06 Jan 2017 04:14:11 +0000
+
+linux-signed (3.3) unstable; urgency=medium
+
+  * Update to linux version 4.8.11-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 03 Dec 2016 15:17:41 +0000
+
+linux-signed (3.2) unstable; urgency=medium
+
+  * debian/bin/sign.py: Only sign vmlinuz if EFI_SECURE_BOOT_SECURELEVEL=y
+  * Update to linux version 4.8.7-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 16 Nov 2016 17:13:40 +0000
+
+linux-signed (3.1) unstable; urgency=medium
+
+  * udeb: Add Built-Using field
+  * Update to linux version 4.8.5-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Tue, 01 Nov 2016 10:19:47 -0600
+
+linux-signed (3) experimental; urgency=medium
+
+  * Update to linux version 4.8~rc8-1~exp1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Tue, 27 Sep 2016 15:28:00 +0100
+
+linux-signed (2.8) unstable; urgency=medium
+
+  * linux-image: postrm: Make failure of rmdir on purge non-fatal
+    (Closes: #841453)
+  * Update to linux version 4.7.8-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Fri, 21 Oct 2016 00:55:00 +0100
+
+linux-signed (2.7) unstable; urgency=medium
+
+  * Reduce kernel-wedge minimum version to 2.93~
+  * Increase debhelper minimum version to avoid bug #516721
+  * Update to linux version 4.7.6-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 10 Oct 2016 15:35:35 +0100
+
+linux-signed (2.6) unstable; urgency=medium
+
+  * Update to linux version 4.7.5-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 26 Sep 2016 19:07:37 +0100
+
+linux-signed (2.5) unstable; urgency=medium
+
+  * Fix handling of binNMU suffix on linux-image version
+  * Update for linux binNMU, version 4.7.4-2+b1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 26 Sep 2016 00:21:04 +0100
+
+linux-signed (2.4) unstable; urgency=medium
+
+  * Validate version suffiix to ensure it sorts lowe than stable security
+    updates
+  * debian/bin/sign.py: Flush temporary release file before running gpgv
+  * debian/bin/sign.py: Use Release, Release.gpg instead of InRelease to
+    avoid the possibility of using unsigned data
+  * Update to linux version 4.7.4-2
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Tue, 20 Sep 2016 22:47:12 +0100
+
+linux-signed (2.3) unstable; urgency=medium
+
+  * Add +s1 to binary package version
+  * Copy device tree files from unsigned package (Closes: #836255)
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 07 Sep 2016 03:49:45 +0100
+
+linux-signed (2.2) unstable; urgency=medium
+
+  * Update to linux version 4.7.2-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 29 Aug 2016 13:23:25 +0100
+
+linux-signed (2.1) experimental; urgency=medium
+
+  * Rename SUITE variable to MIRROR_SUITE and group it with MIRROR_URL
+  * Use sign-file to detach and attach module signatures
+  * Enable kernel image signing on arm64 and armhf, as sbsigntool is now
+    available
+  * Update to linux version 4.7~rc7-1~exp1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 20 Jul 2016 15:53:03 +0100
+
+linux-signed (2) experimental; urgency=medium
+
+  * gencontrol.py: Define ABINAME makefile variable for per-architecture rules
+  * Build signed udebs using configuration from linux-support
+  * Drop '-signed' suffix from linux-image packages and expect unsigned
+    packages to have a '-unsigned' suffix
+  * Fetch package index as Packages.xz instead of Packages.gz, since
+    experimental only has the former
+  * Update to linux version 4.7~rc4-1~exp1
+  * debian/rules: Remove udeb directories in maintainerclean rule
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 22 Jun 2016 02:05:35 +0100
+
+linux-signed (1.3) unstable; urgency=medium
+
+  * Update to linux version 4.6.2-2
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sun, 26 Jun 2016 12:10:50 +0200
+
+linux-signed (1.2) unstable; urgency=medium
+
+  * Update to linux version 4.6.2-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sun, 19 Jun 2016 04:06:11 +0100
+
+linux-signed (1.1) unstable; urgency=medium
+
+  * Fix attachment of module signatures
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 08 Jun 2016 20:50:33 +0100
+
+linux-signed (1) unstable; urgency=medium
+
+  * Update to linux version 4.6.1-1
+  * Upload to unstable
+  * Change binary packages to replace their unsigned counterparts
+  * debian/README.source: Document the SUITE variable
+  * debian/README.source: Document additional steps to prepare the source
+    package
+  * Change versions of binary packages to match the unsigned packages by
+    default
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 08 Jun 2016 13:02:27 +0100
+
+linux-signed (1~exp6) experimental; urgency=medium
+
+  * Update to linux version 4.5.4-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Tue, 17 May 2016 19:18:44 +0100
+
+linux-signed (1~exp5) experimental; urgency=medium
+
+  * debian/rules.defs: Change mirror to deb.debian.org
+  * Update to linux version 4.5.3-2
+  * debian/rules: Make maintainerclean rule more thorough
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 09 May 2016 11:29:08 +0100
+
+linux-signed (1~exp4) experimental; urgency=medium
+
+  * Replace image signing certificate with one that lasts a year
+  * Update to linux version 4.5.2-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 30 Apr 2016 23:14:27 +0200
+
+linux-signed (1~exp3) experimental; urgency=medium
+
+  * debian/rules.real: Export DH_OPTIONS so it actually affects debhelper
+    (fixes FTBFS on all architectures with multiple signed flavours)
+  * debian/control: Add Breaks relationship to ensure busybox runs kmod's
+    modprobe in the initramfs (see #821307)
+  * Invoke hooks under /etc/kernel/signed_post{inst,rm} from maintainer
+    scripts instead of running update-grub directly
+  * debian/control: Add versioned dependency on initramfs-tools to ensure
+    it installs a hook script
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Mon, 18 Apr 2016 03:45:01 +0100
+
+linux-signed (1~exp2) experimental; urgency=medium
+
+  * debian/rules.real: Run dh_installdocs to install copyright file
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 16 Apr 2016 02:51:48 +0100
+
+linux-signed (1~exp1) experimental; urgency=medium
+
+  * Initial upload
+  * Provide signatures for linux version 4.5.1-1
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 16 Apr 2016 01:32:00 +0100

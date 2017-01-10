@@ -1,0 +1,17 @@
+BUILD_DIR = debian/build
+STAMPS_DIR = debian/stamps
+TEMPLATES_DIR = debian/templates
+KERNEL_ABINAME :=
+KERNEL_IMAGE_VERSION :=
+# Note: any version suffix must sort *lower* than +deb
+SIGNED_VERSION_SUFFIX :=
+
+MIRROR_URL = http://deb.debian.org/debian/
+MIRROR_SUITE = unstable
+
+# For initial testing - to be replaced with HSM
+KERNEL_SIGNER :=
+KERNEL_MODULES_PRIVKEY :=
+KERNEL_MODULES_CERT =
+KERNEL_IMAGE_PRIVKEY :=
+KERNEL_IMAGE_CERT :=
