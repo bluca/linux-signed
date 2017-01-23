@@ -1,3 +1,16 @@
+linux-signed (1:1.0) unstable; urgency=medium
+
+  * Import linux-signed 3.4 from https://anonscm.debian.org/git/kernel/linux-signed.git
+  * Symlink vmlinuz and initrd.img in /boot
+  * Add unversioned Provides:
+  * Override L:E for missing source
+  * Ignore debian/localpackages for source artefact
+  * Add support for pesign
+  * Add support for pesign to attach signatures at build-time
+  * Set Brocade metadata
+
+ -- Luca Boccassi <lboccass@brocade.com>  Mon, 23 Jan 2017 17:25:36 +0000
+
 linux-signed (3.4) unstable; urgency=medium
 
   * debian/control: Correct syntax of Built-Using field (Closes: #846488)
