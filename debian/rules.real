@@ -15,9 +15,16 @@ install-signed:
 	mkdir -p $(PACKAGE_DIR)/boot
 	rsync -a $(patsubst %,/boot/%-$(KERNEL_VERSION),config System.map $(IMAGE_INSTALL_STEM)) \
 		$(PACKAGE_DIR)/boot/
+# pesign does not support in-place signature attaching
 	if [ -f $(SIGNATURE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).sig ]; then \
-		sbattach --attach $(SIGNATURE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).sig \
-			$(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION); \
+		if [ "$(SIGNER)" = "pesign" ]; then \
+			mv $(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION) $(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).unsigned; \
+			pesign --import-signed-certificate $(SIGNATURE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).sig -i $(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).unsigned -o $(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION); \
+		rm -f $(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).unsigned; \
+		else \
+			sbattach --attach $(SIGNATURE_DIR)/boot/vmlinuz-$(KERNEL_VERSION).sig \
+				$(PACKAGE_DIR)/boot/vmlinuz-$(KERNEL_VERSION); \
+		fi; \
 		echo >> debian/$(PACKAGE_NAME).substvars 'signed:Description=The kernel image and modules are signed for use with Secure Boot.'; \
 	else \
 		echo >> debian/$(PACKAGE_NAME).substvars 'signed:Description=The modules are signed.'; \

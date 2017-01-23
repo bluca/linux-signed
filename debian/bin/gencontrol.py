@@ -12,7 +12,7 @@ from debian_linux.utils import Templates, read_control
 import os.path, re, codecs, io, subprocess
 
 class Gencontrol(Base):
-    def __init__(self, config, image_version, signed_version_suffix):
+    def __init__(self, config, image_version, signed_version_suffix, signer=''):
         super(Gencontrol, self).__init__(ConfigCoreDump(fp = open(config, "rb")), Templates(["debian/templates"]))
 
         config_entry = self.config['version',]
@@ -21,6 +21,10 @@ class Gencontrol(Base):
         # Check current linux-support version
         assert self.version.complete == re.sub(r'\+b\d+$', r'', image_version)
 
+        if len(signer) == 0 or signer == 'sbsign':
+            self.signer_package = 'sbsigntool'
+        else:
+            self.signer_package = signer
         self.abiname = config_entry['abiname']
         self.binary_version = image_version + signed_version_suffix
         self.vars = {
@@ -31,6 +35,7 @@ class Gencontrol(Base):
             'imageversion': image_version,
             'imagesourceversion': self.version.complete,
             'binaryversion': self.binary_version,
+            'signer_package': self.signer_package,
         }
 
     def _substitute_file(self, template, vars, target, append=False):
@@ -143,4 +148,4 @@ class Gencontrol(Base):
                                   (vars['abiname'], vars['localversion'], name))
 
 if __name__ == '__main__':
-    Gencontrol(sys.argv[1] + "/config.defines.dump", sys.argv[2], sys.argv[3])()
+    Gencontrol(sys.argv[1] + "/config.defines.dump", sys.argv[2], sys.argv[3], sys.argv[4])()

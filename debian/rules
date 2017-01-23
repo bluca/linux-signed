@@ -43,7 +43,7 @@ endif
 
 debian/control-real: $(GENCONTROL) $(CONTROL_FILES)
 	dpkg --compare-versions '$(KERNEL_IMAGE_VERSION)$(SIGNED_VERSION_SUFFIX)' lt '$(KERNEL_IMAGE_VERSION)+deb'
-	$(GENCONTROL) /usr/src/linux-support-$(KERNEL_ABINAME) $(KERNEL_IMAGE_VERSION) '$(SIGNED_VERSION_SUFFIX)'
+	$(GENCONTROL) /usr/src/linux-support-$(KERNEL_ABINAME) $(KERNEL_IMAGE_VERSION) '$(SIGNED_VERSION_SUFFIX)' "$(SIGNER)"
 	md5sum $^ > debian/control.md5sum
 	@echo
 	@echo This target is made to fail intentionally, to make sure
