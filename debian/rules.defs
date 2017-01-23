@@ -5,6 +5,12 @@ KERNEL_ABINAME :=
 KERNEL_IMAGE_VERSION :=
 # Note: any version suffix must sort *lower* than +deb
 SIGNED_VERSION_SUFFIX :=
+# sbsign (default) or pesign
+SIGNER :=
+# when using pesign, points to the NSS DB that holds the certs
+NSS_DIR :=
+# to be used with pesign to make use of a hardware token
+NSS_TOKEN :=
 
 MIRROR_URL = http://deb.debian.org/debian/
 MIRROR_SUITE = unstable

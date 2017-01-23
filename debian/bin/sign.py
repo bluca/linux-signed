@@ -170,8 +170,22 @@ def sign_image_efi(image_name, signature_name, privkey_name, cert_name):
     if not os.path.isfile(signature_name):
         raise Exception('sbsign failed')
 
+def sign_image_efi_pesign(image_name, signature_name, nss_dir, cert_name,
+                          nss_token=""):
+    print('I: Signing image %s' % image_name)
+    print('I: Storing detached signature as %s' % signature_name)
+    os.makedirs(os.path.dirname(signature_name), exist_ok=True)
+    subprocess.check_call(['pesign', '-s', '-n', nss_dir, '-c', cert_name,
+                           '--export-signature', signature_name,
+                           '-i', image_name] +
+                           ([] if len(nss_token) == 0 else ['-t', nss_token]))
+    # Work around bug #819987
+    if not os.path.isfile(signature_name):
+        raise Exception('pesign failed')
+
 def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
-         image_privkey_name, image_cert_name, mirror_url, suite):
+         image_privkey_name, image_cert_name, mirror_url, suite, signer='sbsign',
+         nss_dir=None, nss_token=""):
     config = ConfigCoreDump(fp=open(config_name, 'rb'))
 
     # Check current linux-support version
@@ -228,11 +242,20 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
                     kconfig = kconfig_file.readlines()
                 if ('CONFIG_EFI_STUB=y\n' in kconfig and
                     'CONFIG_EFI_SECURE_BOOT_SECURELEVEL=y\n' in kconfig):
-                    sign_image_efi('%s/boot/vmlinuz-%s' %
-                                   (package_dir, kernelversion),
-                                   '%s/boot/vmlinuz-%s.sig' %
-                                   (signature_dir, kernelversion),
-                                   image_privkey_name, image_cert_name)
+                    if signer == 'sbsign':
+                        sign_image_efi('%s/boot/vmlinuz-%s' %
+                                       (package_dir, kernelversion),
+                                       '%s/boot/vmlinuz-%s.sig' %
+                                       (signature_dir, kernelversion),
+                                       image_privkey_name, image_cert_name)
+                    elif signer == 'pesign':
+                        sign_image_efi_pesign('%s/boot/vmlinuz-%s' %
+                                       (package_dir, kernelversion),
+                                       '%s/boot/vmlinuz-%s.sig' %
+                                       (signature_dir, kernelversion),
+                                       nss_dir, image_cert_name, nss_token)
+                    else:
+                        raise Exception('unknown signer')
 
     print('Signatures should be committed: git add debian/signatures && git commit')
 
