@@ -1,4 +1,4 @@
-Package: linux-image-@abiname@@localversion@
+Package: linux-image-@abiname@@localversion@-signed
 Depends: ${unsigned:Depends}
 Recommends: ${unsigned:Recommends}
 Suggests: ${unsigned:Suggests}

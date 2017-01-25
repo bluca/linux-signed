@@ -144,7 +144,7 @@ class Gencontrol(Base):
 
         for name in ['postinst', 'postrm', 'preinst', 'prerm']:
             self._substitute_file('image.%s' % name, vars,
-                                  'debian/linux-image-%s%s.%s' %
+                                  'debian/linux-image-%s%s-signed.%s' %
                                   (vars['abiname'], vars['localversion'], name))
 
 if __name__ == '__main__':
