@@ -6,6 +6,8 @@ sys.path.append(sys.argv[1] + "/lib/python")
 import os, os.path, shutil, subprocess, tempfile
 import deb822, codecs, hashlib, io, lzma, re, struct, urllib.parse, urllib.request
 import gc
+import pexpect
+import getpass
 
 from debian_linux.config import ConfigCoreDump
 from debian_linux.debian import VersionLinux
@@ -139,16 +141,22 @@ def get_package(mirror, suite, name, version, arch):
     return unpack_dir
 
 def sign_module(kbuild_dir, module_name, signature_name, privkey_name,
-                cert_name):
+                cert_name, pin):
     os.makedirs(os.path.dirname(signature_name), exist_ok=True)
     # 'sign-file -d' currently ignores any <dest> argument and always writes
     # to <module>.p7s, so accept that and rename afterwards
-    subprocess.check_call(['%s/scripts/sign-file' % kbuild_dir, '-d',
-                           'sha256', privkey_name, cert_name, module_name])
+    if pin is None:
+        subprocess.check_call(['%s/scripts/sign-file' % kbuild_dir, '-d',
+                               'sha256', privkey_name, cert_name, module_name])
+    else:
+        sign = pexpect.spawn("{}/scripts/sign-file -d sha256 {} {} {}".format(kbuild_dir, privkey_name, cert_name, module_name), timeout=30)
+        sign.expect("PKCS#11 token PIN:")
+        sign.sendline(pin)
+        sign.expect(pexpect.EOF)
     os.rename(module_name + '.p7s', signature_name)
 
 def sign_modules(kbuild_dir, modules_dir, signature_dir, privkey_name,
-                 cert_name):
+                 cert_name, pin=None):
     print('I: Signing modules in %s' % modules_dir)
     print('I: Storing detached signatures in %s' % signature_dir)
     for walk_dir, subdir_names, file_names in os.walk(modules_dir):
@@ -158,7 +166,7 @@ def sign_modules(kbuild_dir, modules_dir, signature_dir, privkey_name,
                 sign_module(kbuild_dir,
                             os.path.join(walk_dir, rel_name),
                             os.path.join(signature_dir, rel_dir, rel_name) + '.sig',
-                            privkey_name, cert_name)
+                            privkey_name, cert_name, pin)
 
 def sign_image_efi(image_name, signature_name, privkey_name, cert_name):
     print('I: Signing image %s' % image_name)
@@ -171,21 +179,30 @@ def sign_image_efi(image_name, signature_name, privkey_name, cert_name):
         raise Exception('sbsign failed')
 
 def sign_image_efi_pesign(image_name, signature_name, nss_dir, cert_name,
-                          nss_token=""):
+                          nss_token="", pin=None):
     print('I: Signing image %s' % image_name)
     print('I: Storing detached signature as %s' % signature_name)
     os.makedirs(os.path.dirname(signature_name), exist_ok=True)
-    subprocess.check_call(['pesign', '-s', '-n', nss_dir, '-c', cert_name,
-                           '--export-signature', signature_name,
-                           '-i', image_name] +
-                           ([] if len(nss_token) == 0 else ['-t', nss_token]))
+    if pin is None:
+        subprocess.check_call(['pesign', '-s', '-n', nss_dir, '-c', cert_name,
+                               '--export-signature', signature_name,
+                               '-i', image_name] +
+                               ([] if len(nss_token) == 0 else ['-t', nss_token]))
+    else:
+        sign = pexpect.spawn("pesign", args=['-s', '-n', nss_dir, '-c', cert_name,
+                               '--export-signature', signature_name,
+                               '-i', image_name, '-t', nss_token], timeout=60)
+        i = sign.expect([pexpect.EOF, pexpect.TIMEOUT, 'Enter Password or Pin', "Enter passphrase"])
+        while (i >= 2):
+            sign.sendline(pin)
+            i = sign.expect([pexpect.EOF, pexpect.TIMEOUT, 'Enter Password or Pin', "Enter passphrase"])
     # Work around bug #819987
     if not os.path.isfile(signature_name):
         raise Exception('pesign failed')
 
 def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
          image_privkey_name, image_cert_name, mirror_url, suite, signer='sbsign',
-         nss_dir=None, nss_token=""):
+         nss_dir=None, nss_token="", pin=""):
     config = ConfigCoreDump(fp=open(config_name, 'rb'))
 
     # Check current linux-support version
@@ -198,6 +215,11 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
     signature_dir = 'debian/signatures'
     if os.path.isdir(signature_dir):
         shutil.rmtree(signature_dir)
+
+    if signer == "sbsign":
+        pin = None
+    if pin == "" and nss_dir is not None and nss_token != "" and signer == "pesign":
+        pin = getpass.getpass('Hardware token PIN:')
 
     for arch in iter(config['base', ]['arches']):
         for featureset in config['base', arch].get('featuresets', ()):
@@ -232,7 +254,7 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
                 sign_modules(kbuild_dir,
                              '%s/lib/modules/%s' % (package_dir, kernelversion),
                              '%s/lib/modules/%s' % (signature_dir, kernelversion),
-                             modules_privkey_name, modules_cert_name)
+                             modules_privkey_name, modules_cert_name, pin)
 
                 # Currently we can only sign kernel images built with an
                 # EFI stub, which has space for an embedded signature.
@@ -253,7 +275,7 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
                                        (package_dir, kernelversion),
                                        '%s/boot/vmlinuz-%s.sig' %
                                        (signature_dir, kernelversion),
-                                       nss_dir, image_cert_name, nss_token)
+                                       nss_dir, image_cert_name, nss_token, pin)
                     else:
                         raise Exception('unknown signer')
 

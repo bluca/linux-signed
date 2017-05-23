@@ -65,6 +65,6 @@ maintainerclean:
 	rm -rf debian/control debian/control.md5sum debian/linux-* debian/rules.gen debian/localpackages debian/*-modules-*-di* debian/kernel-image-*-di*
 
 sign:
-	$(SIGN) /usr/src/linux-support-$(KERNEL_ABINAME) "$(KERNEL_IMAGE_VERSION)" "$(KERNEL_MODULES_PRIVKEY)" "$(KERNEL_MODULES_CERT)" "$(KERNEL_IMAGE_PRIVKEY)" "$(KERNEL_IMAGE_CERT)" "$(MIRROR_URL)" "$(MIRROR_SUITE)" "$(SIGNER)" "$(NSS_DIR)" "$(NSS_TOKEN)"
+	$(SIGN) /usr/src/linux-support-$(KERNEL_ABINAME) "$(KERNEL_IMAGE_VERSION)" "$(KERNEL_MODULES_PRIVKEY)" "$(KERNEL_MODULES_CERT)" "$(KERNEL_IMAGE_PRIVKEY)" "$(KERNEL_IMAGE_CERT)" "$(MIRROR_URL)" "$(MIRROR_SUITE)" "$(SIGNER)" "$(NSS_DIR)" "$(NSS_TOKEN)" "$(PIN)"
 
 .PHONY: build build-arch build-indep clean binary binary-arch binary-indep binary-arch-all maintainerclean sign
