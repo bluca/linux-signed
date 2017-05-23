@@ -6,18 +6,25 @@ KERNEL_IMAGE_VERSION :=
 # Note: any version suffix must sort *lower* than +deb
 SIGNED_VERSION_SUFFIX :=
 # sbsign (default) or pesign
-SIGNER :=
+SIGNER := pesign
 # when using pesign, points to the NSS DB that holds the certs
-NSS_DIR :=
+NSS_DIR := sql:$(HOME)/git/linux-sign/vyatta/vyatta_pesign_db
 # to be used with pesign to make use of a hardware token
-NSS_TOKEN :=
+# fetch with: modutil -dbdir $NSS_DIR -list
+NSS_TOKEN := PIV_II (PIV Card Holder pin)
 
 MIRROR_URL = http://deb.debian.org/debian/
 MIRROR_SUITE = unstable
 
-# For initial testing - to be replaced with HSM
-KERNEL_SIGNER :=
-KERNEL_MODULES_PRIVKEY :=
-KERNEL_MODULES_CERT =
-KERNEL_IMAGE_PRIVKEY :=
-KERNEL_IMAGE_CERT :=
+KERNEL_SIGNER := lboccass@brocade.com
+# sbsign: path to DB key
+#KERNEL_MODULES_PRIVKEY :=
+# pesign: pkcs11 token, fetch with: p11tool --list-tokens | grep "token=PIV_II"
+KERNEL_MODULES_PRIVKEY := pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II;serial=00000000;token=PIV_II%20%28PIV%20Card%20Holder%20pin%29;id=%02;object=SIGN%20key;type=private
+KERNEL_MODULES_CERT = $(HOME)/git/linux-sign/vyatta/vyatta_db.pem
+# sbsign: path to DB key and certificate in PEM format
+#KERNEL_IMAGE_PRIVKEY :=
+#KERNEL_IMAGE_CERT :=
+# pesign: certificate name in the hardware token, fetch with:
+# certutil -d sql:`pwd` -h 'PIV_II (PIV Card Holder pin)' -L
+KERNEL_IMAGE_CERT := Certificate for Digital Signature
