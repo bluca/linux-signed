@@ -67,6 +67,10 @@ install-signed:
 	done
 	echo >> debian/$(PACKAGE_NAME).substvars "unsigned:DescriptionShort=$$(dpkg-query -f '$${Description}' -W $(IMAGE_PACKAGE_NAME) | head -n 1)"
 	echo >> debian/$(PACKAGE_NAME).substvars "unsigned:DescriptionLong=$$(dpkg-query -f '$${Description}' -W $(IMAGE_PACKAGE_NAME) | tail -n +2 | sed -rz 's/\$$/$${}/g; s/^ //; s/\n \.?/$${Newline}/g')"
+	grep -qs "CONFIG_NET_ROUTING_DOMAINS=y" /boot/config-$(KERNEL_VERSION); \
+	if [ $$? -eq 0 ]; then \
+		echo >> debian/$(PACKAGE_NAME).substvars "rtdmn:Provides=linux-image-rtdmn"; \
+	fi
 	dh_gencontrol -- $(GENCONTROL_ARGS)
 	dh_md5sums
 	dh_builddeb
