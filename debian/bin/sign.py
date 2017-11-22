@@ -264,7 +264,8 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
                     kconfig = kconfig_file.readlines()
                 if ('CONFIG_EFI_STUB=y\n' in kconfig and
                     ('CONFIG_EFI_SECURE_BOOT_SECURELEVEL=y\n' in kconfig or
-                    'CONFIG_EFI_SECURE_BOOT_LOCK_DOWN=y\n' in kconfig)):
+                    'CONFIG_EFI_SECURE_BOOT_LOCK_DOWN=y\n' in kconfig or
+                    'CONFIG_LOCK_DOWN_IN_EFI_SECURE_BOOT=y\n' in kconfig)):
                     if signer == 'sbsign':
                         sign_image_efi('%s/boot/vmlinuz-%s' %
                                        (package_dir, kernelversion),
