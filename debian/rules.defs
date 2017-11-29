@@ -20,8 +20,8 @@ KERNEL_SIGNER := lboccass@brocade.com
 # sbsign: path to DB key
 #KERNEL_MODULES_PRIVKEY :=
 # pesign: pkcs11 token, fetch with: p11tool --list-tokens | grep "token=PIV_II"
-KERNEL_MODULES_PRIVKEY := pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II;serial=00000000;token=PIV_II%20%28PIV%20Card%20Holder%20pin%29;id=%02;object=SIGN%20key;type=private
-KERNEL_MODULES_CERT = $(HOME)/git/linux-sign/vyatta/vyatta_db.pem
+#KERNEL_MODULES_PRIVKEY := pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II;serial=00000000;token=PIV_II%20%28PIV%20Card%20Holder%20pin%29;id=%02;object=SIGN%20key;type=private
+#KERNEL_MODULES_CERT = $(HOME)/git/linux-sign/vyatta/vyatta_db.pem
 # sbsign: path to DB key and certificate in PEM format
 #KERNEL_IMAGE_PRIVKEY :=
 #KERNEL_IMAGE_CERT :=

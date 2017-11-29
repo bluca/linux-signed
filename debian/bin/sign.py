@@ -251,10 +251,11 @@ def sign(config_name, imageversion_str, modules_privkey_name, modules_cert_name,
 
                 signature_dir = os.path.join('debian/signatures', package_name)
                 os.makedirs(signature_dir)
-                sign_modules(kbuild_dir,
-                             '%s/lib/modules/%s' % (package_dir, kernelversion),
-                             '%s/lib/modules/%s' % (signature_dir, kernelversion),
-                             modules_privkey_name, modules_cert_name, pin)
+                if modules_privkey_name is not None and len(modules_privkey_name) > 0:
+                    sign_modules(kbuild_dir,
+                                 '%s/lib/modules/%s' % (package_dir, kernelversion),
+                                 '%s/lib/modules/%s' % (signature_dir, kernelversion),
+                                 modules_privkey_name, modules_cert_name, pin)
 
                 # Currently we can only sign kernel images built with an
                 # EFI stub, which has space for an embedded signature.
