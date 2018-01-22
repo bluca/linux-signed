@@ -5,7 +5,7 @@ Suggests: ${unsigned:Suggests}
 Breaks: ${unsigned:Breaks}
 Conflicts: linux-image-@abiname@@localversion@-unsigned
 Replaces: linux-image-@abiname@@localversion@-unsigned
-Provides: ${rtdmn:Provides}, linux-image@localversion@-signed, linux-image-@featureset@-signed
+Provides: ${vrf:Provides}, linux-image@localversion@-signed, linux-image-@featureset@-signed
 Description: ${unsigned:DescriptionShort} (signed)
  ${unsigned:DescriptionLong}
  .

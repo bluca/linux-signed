@@ -68,7 +68,10 @@ install-signed:
 	echo >> debian/$(PACKAGE_NAME).substvars "unsigned:DescriptionShort=$$(dpkg-query -f '$${Description}' -W $(IMAGE_PACKAGE_NAME) | head -n 1)"
 	echo >> debian/$(PACKAGE_NAME).substvars "unsigned:DescriptionLong=$$(dpkg-query -f '$${Description}' -W $(IMAGE_PACKAGE_NAME) | tail -n +2 | sed -rz 's/\$$/$${}/g; s/^ //; s/\n \.?/$${Newline}/g')"
 	grep -qs "CONFIG_NET_ROUTING_DOMAINS=y" /boot/config-$(KERNEL_VERSION) && \
-		echo >> debian/$(PACKAGE_NAME).substvars "rtdmn:Provides=linux-image-rtdmn" || \
+		echo >> debian/$(PACKAGE_NAME).substvars "vrf:Provides=linux-image-rtdmn" || \
+		echo ""
+	grep -qs "CONFIG_NET_VRF=y" /boot/config-$(KERNEL_VERSION) && \
+		echo >> debian/$(PACKAGE_NAME).substvars "vrf:Provides=linux-image-vrf" || \
 		echo ""
 	dh_gencontrol -- $(GENCONTROL_ARGS)
 	dh_md5sums
