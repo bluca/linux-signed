@@ -1,7 +1,0 @@
-Source: linux-signed
-Section: kernel
-Priority: optional
-Maintainer: Brocade Support <support@brocade.com>
-Standards-Version: 3.9.6
-Build-Depends: debhelper (>= 9.20151004~), rsync, @signer_package@ [amd64 arm64 armhf i386], kernel-wedge (>= 2.93~), linux-kbuild-@version@
-Homepage: https://www.kernel.org/

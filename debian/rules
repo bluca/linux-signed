@@ -1,70 +1,108 @@
 #!/usr/bin/make -f
-SHELL := sh -e
+SHELL := bash -e
 
-include debian/rules.defs
+include /usr/share/dpkg/default.mk
 
-GENCONTROL = debian/bin/gencontrol.py
-SIGN = debian/bin/sign.py
+# When forking to a new signed package, it should be enough to change
+# the following two variables:
+# - where to look for unsigned EFI binaries, and where to install them
+# - unsigned package name
+EFI_INSTALL_DIR := /boot
+UNSIGNED_PACKAGE_NAME := $(shell dpkg -S /boot/vmlinuz-* | sed "s/\(.*\):.*/\1/")
 
-DEB_HOST_ARCH  := $(shell dpkg-architecture -qDEB_HOST_ARCH)
-DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+PACKAGE_NAME := $(shell dpkg -S /boot/vmlinuz-* | sed "s/\(.*\):.*/\1/" | sed "s/-unsigned//")-signed
+PACKAGE_DIR := debian/$(PACKAGE_NAME)
+INSTALL_DIR := $(PACKAGE_DIR)/$(EFI_INSTALL_DIR)
+PACKAGE_VERSION := $(shell dpkg-query --showformat='$${Version}' --show $(UNSIGNED_PACKAGE_NAME))
+SIGNED_SUFFIX := ""
 
-__BINNMU := $(shell dpkg-parsechangelog -SVersion | sed -rne 's,.*\+b([0-9]+)$$,\1,p')
-
-build: build-arch build-indep
-build-arch:
-build-indep:
-
-$(BUILD_DIR):
-	@[ -d $@ ] || mkdir $@
-
-clean: debian/control
-	dh_testdir
-	rm -rf $(BUILD_DIR)
-	dh_clean
-
-binary: binary-arch binary-indep
-binary-arch: debian/control $(BUILD_DIR)
-	dh_testdir
-	$(MAKE) -f debian/rules.gen binary-arch_$(DEB_HOST_ARCH)
-binary-indep:
-
-CONTROL_FILES += debian/changelog $(wildcard debian/templates/control.*) 
-debian/control debian/rules.gen: $(GENCONTROL) $(CONTROL_FILES)
-ifeq ($(wildcard debian/control.md5sum),)
-	$(MAKE) -f debian/rules debian/control-real
-else ifeq ($(__BINNMU),)
-	md5sum --check debian/control.md5sum --status || \
-		$(MAKE) -f debian/rules debian/control-real
-else
-	grep -v debian/changelog debian/control.md5sum | md5sum --check - --status || \
-		$(MAKE) -f debian/rules debian/control-real
+# Building in an OBS worker chroot or locally? Source build will fail otherwise
+ifneq ("$(wildcard /usr/src/packages/SOURCES)","")
+# Generate package metadata at build time - need to override build to make sure
+# it's done before the dh sequencer starts or things will break (generated
+# package(s) will not be acted on). With some version of dpkg + debhelper build
+# can run twice, so take care not to do the mangling twice.
+build:
+	if ! grep -q "$(PACKAGE_NAME)" debian/control; then \
+		sed -i "/Package:/d" debian/control; \
+		sed -i "/Architecture:/d" debian/control; \
+		sed -i "/^Depends:/d" debian/control; \
+		echo "Package: $(PACKAGE_NAME)" >> debian/control; \
+		for PARAM in Architecture Depends Recommends Suggests Replaces Breaks Conflicts; do \
+			echo "$$PARAM: $$(dpkg-query --showformat="\$${$$PARAM}" --show $(UNSIGNED_PACKAGE_NAME))" \
+				>> debian/control; \
+		done; \
+		echo "Provides: linux-image-$(DEB_HOST_ARCH)-signed, $(shell dpkg-query --showformat='$${Provides}' --show $(UNSIGNED_PACKAGE_NAME))" >> debian/control; \
+		echo "Description: kernel image (signed)" >> debian/control; \
+		echo " This package ships a UEFI Secure Boot enabled signed image" >> debian/control; \
+		for SCRIPT in $$(dpkg-query --control-list $(UNSIGNED_PACKAGE_NAME) | grep -v "md5sums"); do \
+			dpkg-query --control-show $(UNSIGNED_PACKAGE_NAME) $$SCRIPT \
+				> debian/$(PACKAGE_NAME).$$SCRIPT; \
+		done; \
+	fi;
+	dh $@
 endif
 
-debian/control-real: $(GENCONTROL) $(CONTROL_FILES)
-	dpkg --compare-versions '$(KERNEL_IMAGE_VERSION)$(SIGNED_VERSION_SUFFIX)' lt '$(KERNEL_IMAGE_VERSION)+deb'
-	$(GENCONTROL) /usr/src/linux-support-$(KERNEL_ABINAME) $(KERNEL_IMAGE_VERSION) '$(SIGNED_VERSION_SUFFIX)' "$(SIGNER)"
-	md5sum $^ > debian/control.md5sum
-	@echo
-	@echo This target is made to fail intentionally, to make sure
-	@echo that it is NEVER run during the automated build. Please
-	@echo ignore the following error, the debian/control file has
-	@echo been generated SUCCESSFULLY.
-	@echo
-	exit 1
+%:
+	dh $@
 
-ifdef DEBIAN_KERNEL_BUILD_ANY
-binary-arch: binary-arch-all
-endif
+# Build with the original's version, changelog and copyright, as it makes
+# more sense to have it match the unsigned binary
 
-binary-arch-all: debian/control $(BUILD_DIR)
-	dh_testdir
-	$(MAKE) -f debian/rules.gen binary-arch
+# Generate a strict dependency - the unsigned and signed packages must match
+override_dh_gencontrol:
+	dh_gencontrol -p $(PACKAGE_NAME) -- -v$(PACKAGE_VERSION) \
+		-V'sign:Depends=$(UNSIGNED_PACKAGE_NAME) (= $(PACKAGE_VERSION))'
 
-maintainerclean:
-	rm -rf debian/control debian/control.md5sum debian/linux-* debian/rules.gen debian/localpackages debian/*-modules-*-di* debian/kernel-image-*-di*
+override_dh_installchangelogs:
+	dh_installchangelogs
+	gunzip -c /usr/share/doc/$(UNSIGNED_PACKAGE_NAME)/changelog.Debian.gz > \
+		$(PACKAGE_DIR)/usr/share/doc/$(PACKAGE_NAME)/changelog
 
-sign:
-	$(SIGN) /usr/src/linux-support-$(KERNEL_ABINAME) "$(KERNEL_IMAGE_VERSION)" "$(KERNEL_MODULES_PRIVKEY)" "$(KERNEL_MODULES_CERT)" "$(KERNEL_IMAGE_PRIVKEY)" "$(KERNEL_IMAGE_CERT)" "$(MIRROR_URL)" "$(MIRROR_SUITE)" "$(SIGNER)" "$(NSS_DIR)" "$(NSS_TOKEN)" "$(PIN)"
+override_dh_installdocs:
+	dh_installdocs
+	cp /usr/share/doc/$(UNSIGNED_PACKAGE_NAME)/copyright \
+		$(PACKAGE_DIR)/usr/share/doc/$(PACKAGE_NAME)/
 
-.PHONY: build build-arch build-indep clean binary binary-arch binary-indep binary-arch-all maintainerclean sign
+# On the first pass extract the signature(s), package them as signd expects and
+# store them in the OTHER directory. This will trigger the signer, which will
+# place the cpio archive with the signatures in the SOURCES directory and restart
+# the build.
+# During this second pass unpack the signatures and the corresponding hashes and
+# apply them to the binary with pesign, and install them with the .signed suffix.
+# The dummy certutil DB is necessary otherwise pesign will refuse to work.
+override_dh_auto_install:
+	if [ ! -f ../SOURCES/$(UNSIGNED_PACKAGE_NAME).cpio.rsasign.sig ]; then \
+		nss_db=$$PWD/nss-db; \
+		mkdir -p $$nss_db; \
+		certutil -N -d sql:"$$nss_db" --empty-password; \
+		for f in $$(find $(EFI_INSTALL_DIR) -type f -name "vmlinuz-*" -o -type f -name "*.efi"); do \
+			pesign -n sql:"$$nss_db" -i $$f -E $${f##*/}.hash; \
+		done; \
+		find . -type f -name "*.hash" | cpio -H newc -o > ../OTHER/$(UNSIGNED_PACKAGE_NAME).cpio.rsasign; \
+		rm -rf $$nss_db;\
+	else \
+		mkdir nss-db; \
+		nss_db=$$PWD/nss-db; \
+		certutil -N -d sql:"$$nss_db" -f "$$nss_db/passwd" --empty-password; \
+		certutil -A -d sql:"$$nss_db" -n cert -t CT,CT,CT -i ../SOURCES/_projectcert.crt; \
+		mkdir -p $(INSTALL_DIR); \
+		cpio -idm < ../SOURCES/$(UNSIGNED_PACKAGE_NAME).cpio.rsasign.sig; \
+		while read SIG; do \
+			export infile=$${SIG%.sig}; \
+			cpio -i --to-stdout $${infile#*/} < ../SOURCES/$(UNSIGNED_PACKAGE_NAME).cpio.rsasign > $${infile}.sattrs; \
+			test -s $${infile}.sattrs || exit 1; \
+			pesign -n sql:"$$nss_db" -c cert -i $(EFI_INSTALL_DIR)/$${SIG%.hash.sig} -o $(INSTALL_DIR)/"$${SIG%.hash.sig}"$(SIGNED_SUFFIX) -d sha256 -I "$${infile}.sattrs" -R "$$SIG"; \
+		done < <(find -type f -name '*.sig' -printf '%P\n'); \
+		rm -rf $$nss_db; \
+		mkdir -p $(PACKAGE_DIR)/lib/modules; \
+		for f in $$(find $(EFI_INSTALL_DIR) -type f -name "vmlinuz-*" -printf '%P\n'); do \
+			cp -r /lib/modules/$${f##vmlinuz-} $(PACKAGE_DIR)/lib/modules/; \
+			cp $(EFI_INSTALL_DIR)/System.map-$${f##vmlinuz-} $(INSTALL_DIR)/; \
+			cp $(EFI_INSTALL_DIR)/config-$${f##vmlinuz-} $(INSTALL_DIR)/; \
+		done; \
+	fi
+
+override_dh_strip:
+	# Avoid stripping signatures, especially with kernel modules,
+	# the binaries have already been stripped in the actual build
