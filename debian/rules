@@ -71,6 +71,11 @@ override_dh_installdocs:
 # During this second pass unpack the signatures and the corresponding hashes and
 # apply them to the binary with pesign, and install them with the .signed suffix.
 # The dummy certutil DB is necessary otherwise pesign will refuse to work.
+# The symlinks for the vmlinuz and initrd.img are hacks for live-build - given the
+# package name is -signed, the live-buid flavour has to be $arch-signed but that's
+# also used for the grub cfg filename, so we need a symlink. We have to use the
+# -signed suffix for the package otherwise this source package would build-depend
+# on itself and cause a build loop on OBS.
 override_dh_auto_install:
 	if [ ! -f ../SOURCES/$(UNSIGNED_PACKAGE_NAME).cpio.rsasign.sig ]; then \
 		nss_db=$$PWD/nss-db; \
@@ -100,6 +105,8 @@ override_dh_auto_install:
 			cp -r /lib/modules/$${f##vmlinuz-} $(PACKAGE_DIR)/lib/modules/; \
 			cp $(EFI_INSTALL_DIR)/System.map-$${f##vmlinuz-} $(INSTALL_DIR)/; \
 			cp $(EFI_INSTALL_DIR)/config-$${f##vmlinuz-} $(INSTALL_DIR)/; \
+			dh_link -p $(PACKAGE_NAME) /boot/$$f /boot/$$f-signed; \
+			dh_link -p $(PACKAGE_NAME) /boot/initrd.img-$${f##vmlinuz-} /boot/initrd.img-$${f##vmlinuz-}-signed; \
 		done; \
 	fi
 
